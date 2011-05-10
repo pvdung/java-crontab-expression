@@ -294,11 +294,15 @@ public class FixedPeriodCron {
 	 * calendar.
 	 *
 	 * @param reference Reference calendar (usually, "now").
-	 * @return Number of milliseconds to the next match/run.
+	 * @return Number of milliseconds to the next match/run (or null).
 	 */
-	public long nextMatchInMillis(Calendar reference) {
+	public Long nextMatchInMillis(Calendar reference) {
+		Long millis = null;
 		Calendar next = this.getClosestDateAfter(reference);
-		return next.getTimeInMillis() - reference.getTimeInMillis();
+		if (next != null) {
+			millis = next.getTimeInMillis() - reference.getTimeInMillis();
+		}
+		return millis;
 	}
 
 	/**
@@ -306,12 +310,18 @@ public class FixedPeriodCron {
 	 * period where the date of the calendar is in.
 	 *
 	 * @param reference Reference calendar (usually, "now").
-	 * @return Period span in milliseconds.
+	 * @return Period span in milliseconds (or null).
 	 */
-	public long periodInMillis(Calendar reference) {
+	public Long periodInMillis(Calendar reference) {
+		Long millis = null;
 		Calendar last = this.getClosestDateBeforeOrSame(reference);
-		Calendar next = this.getClosestDateAfter(reference);
-		return next.getTimeInMillis() - last.getTimeInMillis();
+		if (last != null) {
+			Calendar next = this.getClosestDateAfter(reference);
+			if (next != null) {
+				millis = next.getTimeInMillis() - last.getTimeInMillis();
+			}
+		}
+		return millis;
 	}
 
 	/**
