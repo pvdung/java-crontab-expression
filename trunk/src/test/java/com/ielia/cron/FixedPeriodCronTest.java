@@ -1,23 +1,27 @@
 package com.ielia.cron;
 
-import static org.junit.Assert.*;
-
-import java.util.Calendar;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test class (JUnit4) for FixedPeriodCron.
  *
  * @author ielia
  */
+// TODO: Refactor.
 public class FixedPeriodCronTest {
 	protected static final int DATES = 2;
 	protected static final int CRONS = 2;
-	protected static final int[] CHECK_FIELDS = { Calendar.DATE, Calendar.MONTH,
-		Calendar.YEAR, Calendar.HOUR_OF_DAY, Calendar.MINUTE };
-
+	protected static final int[] CHECK_FIELDS = {Calendar.DATE, Calendar.MONTH,
+			Calendar.YEAR, Calendar.HOUR_OF_DAY, Calendar.MINUTE,
+			Calendar.SECOND, Calendar.MILLISECOND};
 	FixedPeriodCron[] crons;
 	Calendar[] referenceDates;
 	Calendar[][] previousDates, nextDates;
@@ -142,31 +146,31 @@ public class FixedPeriodCronTest {
 		 */
 		this.nextMatchesInMillis = new Long[CRONS][DATES];
 		/* 3 days + 1 minute */
-		this.nextMatchesInMillis[0][0] = (long)3*24*60*60*1000+60*1000;
+		this.nextMatchesInMillis[0][0] = (long) 3 * 24 * 60 * 60 * 1000 + 60 * 1000;
 		/* 12 hours */
-		this.nextMatchesInMillis[0][1] = (long)12*60*60*1000;
+		this.nextMatchesInMillis[0][1] = (long) 12 * 60 * 60 * 1000;
 		/* 11 minutes */
-		this.nextMatchesInMillis[1][0] = (long)11*60*1000;
+		this.nextMatchesInMillis[1][0] = (long) 11 * 60 * 1000;
 		/* 1 day + 12 hours + 10 minutes */
-		this.nextMatchesInMillis[1][1] = (long)24*60*60*1000+12*60*60*1000+
-			10*60*1000;
+		this.nextMatchesInMillis[1][1] = (long) 24 * 60 * 60 * 1000 + 12 * 60 * 60 * 1000 +
+				10 * 60 * 1000;
 
 		/**
 		 * Periods in milliseconds
 		 */
 		this.periodsInMillis = new Long[CRONS][DATES];
 		/* 7 days */
-		this.periodsInMillis[0][0] = (long)7*24*60*60*1000;
+		this.periodsInMillis[0][0] = (long) 7 * 24 * 60 * 60 * 1000;
 		/* 7 days */
-		this.periodsInMillis[0][1] = (long)7*24*60*60*1000;
+		this.periodsInMillis[0][1] = (long) 7 * 24 * 60 * 60 * 1000;
 		/* 2 days - 30 minutes */
-		this.periodsInMillis[1][0] = (long)2*24*60*60*1000-30*60*1000;
+		this.periodsInMillis[1][0] = (long) 2 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000;
 		/* 2 days - 30 minutes */
-		this.periodsInMillis[1][1] = (long)2*24*60*60*1000-30*60*1000;
+		this.periodsInMillis[1][1] = (long) 2 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000;
 	}
 
 	/**
-	 * Test method for {@link com.barcelo.utils.FixedPeriodCron#getClosestDateBeforeOrSame(java.util.Calendar)}.
+	 * Test method for {@link com.ielia.cron.FixedPeriodCron#getClosestDateBeforeOrSame(java.util.Calendar)}.
 	 */
 	@Test
 	public void testGetClosestDateBeforeOrSame() {
@@ -175,11 +179,12 @@ public class FixedPeriodCronTest {
 				Calendar result = this.crons[i].getClosestDateBeforeOrSame(
 						this.referenceDates[j]);
 				/**
-				 * No comparo fechas directamente para que el assert me diga qué
-				 * campo está mal.
+				 * Not comparing dates, but their fields, so the assert will
+				 * tell me which one is wrong.
 				 */
-				for (int field:CHECK_FIELDS) {
-					assertEquals(this.previousDates[i][j].get(field),
+				for (int field : CHECK_FIELDS) {
+					assertEquals("i: " + i + ", j: " + j + ", field: " + field,
+							this.previousDates[i][j].get(field),
 							result.get(field));
 				}
 			}
@@ -187,7 +192,44 @@ public class FixedPeriodCronTest {
 	}
 
 	/**
-	 * Test method for {@link com.barcelo.utils.FixedPeriodCron#getClosestDateAfter(java.util.Calendar)}.
+	 * Test method for {@link com.ielia.cron.FixedPeriodCron#getClosestDateBeforeOrSame(java.util.Calendar, int, int)}.
+	 * TODO: Refactor.
+	 */
+	@Test
+	public void testGetClosestDateBeforeOrSameWithNonZeroCronRunMilliseconds() {
+		FixedPeriodCron cron = new FixedPeriodCron("* * * * *");
+		Calendar reference = new GregorianCalendar(2000, 0, 1, 0, 1, 0);
+		reference.set(Calendar.MILLISECOND, 1);
+		Calendar result = cron.getClosestDateBeforeOrSame(reference, 0, 0);
+		for (int field : CHECK_FIELDS) {
+			if (field == Calendar.MILLISECOND) {
+				assertEquals("field: " + field, 0, result.get(field));
+			} else {
+				assertEquals("field: " + field, reference.get(field),
+						result.get(field));
+			}
+		}
+		result = cron.getClosestDateBeforeOrSame(reference, 0, 1);
+		for (int field : CHECK_FIELDS) {
+			assertEquals("field: " + field, reference.get(field),
+					result.get(field));
+		}
+		result = cron.getClosestDateBeforeOrSame(reference, 0, 2);
+		for (int field : CHECK_FIELDS) {
+			if (field == Calendar.MINUTE) {
+				assertEquals("field: " + field, reference.get(field) - 1,
+						result.get(field));
+			} else if (field == Calendar.MILLISECOND) {
+				assertEquals("field: " + field, 2, result.get(field));
+			} else {
+				assertEquals("field: " + field, reference.get(field),
+						result.get(field));
+			}
+		}
+	}
+
+	/**
+	 * Test method for {@link com.ielia.cron.FixedPeriodCron#getClosestDateAfter(java.util.Calendar)}.
 	 */
 	@Test
 	public void testGetClosestDateAfter() {
@@ -196,19 +238,61 @@ public class FixedPeriodCronTest {
 				Calendar result = this.crons[i].getClosestDateAfter(
 						this.referenceDates[j]);
 				/**
-				 * No comparo fechas directamente para que el assert me diga qué
-				 * campo está mal.
+				 * Not comparing dates, but their fields, so the assert will
+				 * tell me which one is wrong.
 				 */
-				for (int field:CHECK_FIELDS) {
-					assertEquals(this.nextDates[i][j].get(field),
-							result.get(field));
+				for (int field : CHECK_FIELDS) {
+					assertEquals("i: " + i + ", j: " + j + ", field: " + field,
+							this.nextDates[i][j].get(field), result.get(field));
 				}
 			}
 		}
 	}
 
 	/**
-	 * Test method for {@link com.barcelo.utils.FixedPeriodCron#nextMatchInMillis(java.util.Calendar)}.
+	 * Test method for {@link com.ielia.cron.FixedPeriodCron#getClosestDateAfter(java.util.Calendar, int, int)}.
+	 * TODO: Refactor.
+	 */
+	@Test
+	public void testGetClosestAfterWithNonZeroCronRunMilliseconds() {
+		FixedPeriodCron cron = new FixedPeriodCron("* * * * *");
+		Calendar reference = new GregorianCalendar(2000, 0, 1, 0, 1, 0);
+		reference.set(Calendar.MILLISECOND, 1);
+		Calendar result = cron.getClosestDateAfter(reference, 0, 0);
+		for (int field : CHECK_FIELDS) {
+			if (field == Calendar.MINUTE) {
+				assertEquals("field: " + field, reference.get(field) + 1,
+						result.get(field));
+			} else if (field == Calendar.MILLISECOND) {
+				assertEquals("field: " + field, 0, result.get(field));
+			} else {
+				assertEquals("field: " + field, reference.get(field),
+						result.get(field));
+			}
+		}
+		result = cron.getClosestDateAfter(reference, 0, 1);
+		for (int field : CHECK_FIELDS) {
+			if (field == Calendar.MINUTE) {
+				assertEquals("field: " + field, reference.get(field) + 1,
+						result.get(field));
+			} else {
+				assertEquals("field: " + field, reference.get(field),
+						result.get(field));
+			}
+		}
+		result = cron.getClosestDateAfter(reference, 0, 2);
+		for (int field : CHECK_FIELDS) {
+			if (field == Calendar.MILLISECOND) {
+				assertEquals("field: " + field, 2, result.get(field));
+			} else {
+				assertEquals("field: " + field, reference.get(field),
+						result.get(field));
+			}
+		}
+	}
+
+	/**
+	 * Test method for {@link com.ielia.cron.FixedPeriodCron#nextMatchInMillis(java.util.Calendar)}.
 	 */
 	@Test
 	public void testNextMatchInMillis() {
@@ -216,13 +300,14 @@ public class FixedPeriodCronTest {
 			for (int j = 0; j < DATES; ++j) {
 				Long result = this.crons[i].nextMatchInMillis(
 						this.referenceDates[j]);
-				assertEquals(this.nextMatchesInMillis[i][j], result);
+				assertEquals("i: " + i + ", j: " + j,
+						this.nextMatchesInMillis[i][j], result);
 			}
 		}
 	}
 
 	/**
-	 * Test method for {@link com.barcelo.utils.FixedPeriodCron#periodInMillis(java.util.Calendar)}.
+	 * Test method for {@link com.ielia.cron.FixedPeriodCron#periodInMillis(java.util.Calendar)}.
 	 */
 	@Test
 	public void testPeriodInMillis() {
@@ -230,7 +315,106 @@ public class FixedPeriodCronTest {
 			for (int j = 0; j < DATES; ++j) {
 				Long result = this.crons[i].periodInMillis(
 						this.referenceDates[j]);
-				assertEquals(this.periodsInMillis[i][j], result);
+				assertEquals("i: " + i + ", j: " + j,
+						this.periodsInMillis[i][j], result);
+			}
+		}
+	}
+
+	@Test
+	public void testSameMinuteAsTheMatch() {
+		FixedPeriodCron cron = new FixedPeriodCron("* * * * *");
+		Calendar reference = new GregorianCalendar(2000, 0, 1, 0, 0, 0);
+		Long nextMatch;
+		Long period = 60000L;
+		for (int i = 1; i < 60; ++i) {
+			reference.set(Calendar.SECOND, i);
+			nextMatch = (long) ((60 - i) % 60) * 1000L;
+			assertEquals("i: " + i, nextMatch,
+					cron.nextMatchInMillis(reference));
+			assertEquals("i: " + i, period, cron.periodInMillis(reference));
+		}
+		for (int i = 1; i < 60; ++i) {
+			reference.set(Calendar.SECOND, i);
+			nextMatch = (long) ((60 - i) % 60) * 1000L;
+			assertEquals("i: " + i, nextMatch,
+					cron.nextMatchInMillis(reference));
+			assertEquals("i: " + i, period, cron.periodInMillis(reference));
+		}
+		reference.set(Calendar.SECOND, 0);
+		reference.set(Calendar.MILLISECOND, 1);
+		nextMatch = 59999L;
+		assertEquals(nextMatch, cron.nextMatchInMillis(reference, 0, 0));
+		assertEquals(period, cron.periodInMillis(reference, 0, 0));
+		nextMatch = 60000L;
+		assertEquals(nextMatch, cron.nextMatchInMillis(reference, 0, 1));
+		assertEquals(period, cron.periodInMillis(reference, 0, 1));
+		nextMatch = 1L;
+		assertEquals(nextMatch, cron.nextMatchInMillis(reference, 0, 2));
+		assertEquals(period, cron.periodInMillis(reference, 0, 2));
+	}
+
+	/**
+	 * Test method for {@link com.ielia.cron.FixedPeriodCron#matches(java.util.Calendar, int, int, boolean)}.
+	 */
+	@Test
+	public void testMatches() {
+		Calendar reference = new GregorianCalendar(2005, 0, 2, 0, 1, 1);
+		FixedPeriodCron cron = new FixedPeriodCron("1 * * * 7");
+		assertFalse(cron.matches(reference));
+		assertFalse(cron.matches(reference, true));
+		assertTrue(cron.matches(reference, false));
+		assertFalse(cron.matches(reference, 0, 0, true));
+		assertTrue(cron.matches(reference, 0, 0, false));
+		assertTrue(cron.matches(reference, 1, 0, true));
+		assertTrue(cron.matches(reference, 1, 0, false));
+		assertFalse(cron.matches(reference, 1, 1, true));
+		assertTrue(cron.matches(reference, 1, 0, false));
+		reference.set(Calendar.MINUTE, 2);
+		assertFalse(cron.matches(reference));
+		assertFalse(cron.matches(reference, true));
+		assertFalse(cron.matches(reference, false));
+		assertFalse(cron.matches(reference, 0, 0, true));
+		assertFalse(cron.matches(reference, 0, 0, false));
+		assertFalse(cron.matches(reference, 1, 0, true));
+		assertFalse(cron.matches(reference, 1, 0, false));
+		assertFalse(cron.matches(reference, 1, 1, true));
+		assertFalse(cron.matches(reference, 1, 0, false));
+		reference.set(Calendar.MINUTE, 1);
+		reference.set(Calendar.YEAR, 2006);
+		assertFalse(cron.matches(reference));
+		assertFalse(cron.matches(reference, true));
+		assertFalse(cron.matches(reference, false));
+		assertFalse(cron.matches(reference, 0, 0, true));
+		assertFalse(cron.matches(reference, 0, 0, false));
+		assertFalse(cron.matches(reference, 1, 0, true));
+		assertFalse(cron.matches(reference, 1, 0, false));
+		assertFalse(cron.matches(reference, 1, 1, true));
+		assertFalse(cron.matches(reference, 1, 0, false));
+	}
+
+	@Test
+	public void testThroughoutTheYears() {
+		FixedPeriodCron cron = new FixedPeriodCron("0 0 6 1 0");
+		Calendar reference = new GregorianCalendar(2000, 0, 6, 0, 0, 0);
+		Calendar beforeOrSame = cron.getClosestDateBeforeOrSame(reference, 0, 0);
+		for (int field : CHECK_FIELDS) {
+			if (field == Calendar.YEAR) {
+				assertEquals("field: " + field, 1991, beforeOrSame.get(field));
+			} else {
+				assertEquals("field: " + field, reference.get(field),
+						beforeOrSame.get(field));
+			}
+		}
+		cron = new FixedPeriodCron("0 0 3 1 0");
+		reference = new GregorianCalendar(2000, 0, 3, 0, 0, 0);
+		Calendar after = cron.getClosestDateAfter(reference, 0, 0);
+		for (int field : CHECK_FIELDS) {
+			if (field == Calendar.YEAR) {
+				assertEquals("[YEAR] field: " + field, 2010, after.get(field));
+			} else {
+				assertEquals("field: " + field, reference.get(field),
+						after.get(field));
 			}
 		}
 	}

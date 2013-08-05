@@ -7,6 +7,7 @@
 	<groupId>com.ielia.cron</groupId>
 	<artifactId>java-crontab-expression</artifactId>
 	<version>1.0-SNAPSHOT</version>
+
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -14,4 +15,17 @@
 			<version>4.11</version>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<encoding>UTF-8</encoding>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
